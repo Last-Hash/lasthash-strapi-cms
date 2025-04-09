@@ -147,12 +147,29 @@ jobs:
               exit 1
             }
             
-            # Clean install dependencies
+            # Clean install dependencies with swap space to prevent OOM
             echo "📥 Installing dependencies..."
             rm -rf node_modules
             rm -f package-lock.json # Remove lockfile to avoid conflicts
-            export NODE_OPTIONS="--max_old_space_size=4096" # Increase memory limit
-            npm install --production=false # Install all dependencies including dev
+            
+            # Setup swap space to prevent OOM errors
+            echo "💾 Setting up swap space..."
+            if [ ! -f /swapfile ]; then
+              sudo fallocate -l 2G /swapfile
+              sudo chmod 600 /swapfile
+              sudo mkswap /swapfile
+              sudo swapon /swapfile
+              echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
+              echo "✅ Swap space created"
+            else
+              echo "✅ Swap space already exists"
+            fi
+            sudo swapon --show
+            
+            # Install dependencies with smaller chunks
+            echo "📦 Installing dependencies in chunks..."
+            export NODE_OPTIONS="--max_old_space_size=2048"
+            npm install --no-fund --no-audit --prefer-offline --production=false
             
             # Setup environment file with correct values
             echo "📝 Setting up environment file..."
