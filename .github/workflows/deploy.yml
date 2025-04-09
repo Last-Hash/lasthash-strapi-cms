@@ -16,40 +16,51 @@ jobs:
           echo "🔍 Debugging SSH Connection"
           echo "Host: ${{ secrets.EC2_HOST }}"
           echo "Username: ${{ secrets.EC2_USERNAME }}"
-          echo "SSH Key Length: ${#{{ secrets.EC2_SSH_KEY }}}
+          echo "SSH Key Check: ${{ secrets.EC2_SSH_KEY != '' && 'Present' || 'Missing' }}"
       
-      - name: Create SSH Debug Directory
+      - name: Setup SSH Directory
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          echo "🔐 SSH key file created"
-          
-      - name: Test SSH Connection
-        run: |
-          echo "📡 Testing SSH Connection..."
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} 'echo "SSH Connection Successful"' || echo "SSH Connection Failed"
-      
-      - name: Test SSH Connection with Verbose Output
-        run: |
-          echo "📡 Testing SSH Connection with verbose logging..."
-          ssh -v -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} 'echo "SSH Connection Successful"' || echo "SSH Connection Failed"
-          
-      - name: Check SSH Key Permissions
-        run: |
-          echo "🔐 Checking SSH key permissions..."
           ls -la ~/.ssh/deploy_key
           
-      - name: Verify SSH Key Format
+      - name: Validate SSH Key Format
         run: |
-          echo "📝 Verifying SSH key format..."
+          echo "📝 Validating SSH key format..."
+          if ! grep -q "BEGIN RSA PRIVATE KEY" ~/.ssh/deploy_key; then
+            echo "❌ SSH key is missing BEGIN header"
+            exit 1
+          fi
+          if ! grep -q "END RSA PRIVATE KEY" ~/.ssh/deploy_key; then
+            echo "❌ SSH key is missing END footer"
+            exit 1
+          fi
+          echo "✅ SSH key format validation passed"
+      
+      - name: Test SSH Connection
+        id: ssh_test
+        continue-on-error: true
+        run: |
+          ssh -v -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} 'echo "SSH Connection Successful"'
+      
+      - name: Check SSH Connection Result
+        if: steps.ssh_test.outcome == 'failure'
+        run: |
+          echo "❌ SSH Connection Failed"
+          echo "Debug Information:"
+          echo "Key Permissions:"
+          ls -la ~/.ssh/deploy_key
+          echo "Key Format:"
           ssh-keygen -l -f ~/.ssh/deploy_key || echo "Invalid key format"
+          exit 1
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'yarn'
           
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.0
@@ -59,15 +70,36 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           debug: true
           script: |
+            set -e
             echo "🚀 Starting deployment..."
-            cd /var/www/strapi-cms || exit 1
+            
+            # Verify directory exists
+            if [ ! -d "/var/www/strapi-cms" ]; then
+              echo "❌ Directory /var/www/strapi-cms does not exist"
+              exit 1
+            fi
+            
+            cd /var/www/strapi-cms
             echo "📂 Current directory: $(pwd)"
+            
+            # Pull latest changes
             echo "📦 Running git pull..."
-            git pull origin main || exit 1
+            git pull origin main
+            
+            # Install dependencies
             echo "📥 Installing dependencies..."
-            yarn install || exit 1
+            yarn install --frozen-lockfile
+            
+            # Build application
             echo "🏗️ Building application..."
-            yarn build || exit 1
+            yarn build
+            
+            # Restart PM2
             echo "🔄 Restarting PM2..."
-            pm2 restart strapi || pm2 start yarn --name "strapi" -- start
+            if pm2 list | grep -q "strapi"; then
+              pm2 restart strapi
+            else
+              pm2 start yarn --name "strapi" -- start
+            fi
+            
             echo "✅ Deployment complete!"
