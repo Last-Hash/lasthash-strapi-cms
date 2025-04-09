@@ -152,24 +152,41 @@ jobs:
             rm -rf node_modules
             rm -f package-lock.json # Remove lockfile to avoid conflicts
             
-            # Setup swap space to prevent OOM errors
+            # Setup swap space to prevent OOM errors - with better error handling
             echo "💾 Setting up swap space..."
             if [ ! -f /swapfile ]; then
-              sudo fallocate -l 2G /swapfile
-              sudo chmod 600 /swapfile
-              sudo mkswap /swapfile
-              sudo swapon /swapfile
-              echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
-              echo "✅ Swap space created"
+              # Try to create swap with error handling
+              sudo fallocate -l 2G /swapfile || {
+                echo "⚠️ fallocate failed, trying dd method..."
+                sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 || {
+                  echo "⚠️ Failed to create swap file, but continuing deployment"
+                }
+              }
+              
+              # Only proceed with swap setup if the file was created
+              if [ -f /swapfile ]; then
+                sudo chmod 600 /swapfile || echo "⚠️ chmod failed but continuing"
+                sudo mkswap /swapfile || echo "⚠️ mkswap failed but continuing"
+                sudo swapon /swapfile || echo "⚠️ swapon failed but continuing"
+                echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
+                echo "✅ Swap space created (or attempted)"
+              fi
             else
-              echo "✅ Swap space already exists"
+              echo "✅ Swap file already exists"
+              # Try to activate existing swap file
+              sudo swapon /swapfile 2>/dev/null || echo "⚠️ Could not enable existing swap file"
             fi
-            sudo swapon --show
             
-            # Install dependencies with smaller chunks
-            echo "📦 Installing dependencies in chunks..."
-            export NODE_OPTIONS="--max_old_space_size=2048"
-            npm install --no-fund --no-audit --prefer-offline --production=false
+            # Continue regardless of swap setup success
+            sudo swapon --show || echo "⚠️ No swap space available"
+            
+            # Install dependencies with memory optimizations
+            echo "📦 Installing dependencies with optimizations..."
+            export NODE_OPTIONS="--max_old_space_size=1024"
+            npm install --no-fund --no-audit --prefer-offline --production=false --no-optional || {
+              echo "⚠️ Full install failed, trying minimal install..."
+              npm install --production --no-optional
+            }
             
             # Setup environment file with correct values
             echo "📝 Setting up environment file..."
