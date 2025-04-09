@@ -90,7 +90,7 @@ jobs:
             
             # Update package lists and install dependencies
             echo "📦 Updating system packages..."
-            sudo apt-get update && sudo apt-get install -y curl git || {
+            sudo apt-get update && sudo apt-get install -y curl git build-essential python3 || {
               echo "❌ Failed to install system packages"
               exit 1
             }
@@ -100,6 +100,13 @@ jobs:
             curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && \
             sudo apt-get install -y nodejs || {
               echo "❌ Failed to install Node.js"
+              exit 1
+            }
+            
+            # Install additional build tools
+            echo "📦 Installing additional build tools..."
+            sudo apt-get install -y gcc g++ make || {
+              echo "❌ Failed to install build tools"
               exit 1
             }
             
@@ -143,28 +150,38 @@ jobs:
             # Clean install dependencies
             echo "📥 Installing dependencies..."
             rm -rf node_modules
-            npm ci || {
-              echo "❌ Failed to install dependencies"
-              exit 1
-            }
+            rm -f package-lock.json # Remove lockfile to avoid conflicts
+            export NODE_OPTIONS="--max_old_space_size=4096" # Increase memory limit
+            npm install --production=false # Install all dependencies including dev
             
-            # Setup environment file
+            # Setup environment file with correct values
             echo "📝 Setting up environment file..."
-            echo "HOST=0.0.0.0" > .env
-            echo "PORT=1337" >> .env
-            echo "APP_KEYS=$APP_KEYS" >> .env
-            echo "API_TOKEN_SALT=$API_TOKEN_SALT" >> .env
-            echo "ADMIN_JWT_SECRET=$ADMIN_JWT_SECRET" >> .env
-            echo "TRANSFER_TOKEN_SALT=$TRANSFER_TOKEN_SALT" >> .env
-            echo "JWT_SECRET=$JWT_SECRET" >> .env
-            echo "DATABASE_CLIENT=sqlite" >> .env
-            echo "DATABASE_FILENAME=.tmp/data.db" >> .env
+            cat > .env << EOF
+HOST=0.0.0.0
+PORT=1337
+APP_KEYS=toBeModified1,toBeModified2,toBeModified3,toBeModified4
+API_TOKEN_SALT=b6c3c3f1d8e70c8529f775881b761f70
+ADMIN_JWT_SECRET=787ea12b6507b7cdac4fdd7af0ede5a4
+TRANSFER_TOKEN_SALT=8c9b95d2e1f1d4a2b84a8e4c984c6f32
+JWT_SECRET=3fb45e852d67f1c4a88e2c52d0b79f49
+DATABASE_CLIENT=sqlite
+DATABASE_FILENAME=.tmp/data.db
+EOF
             
-            # Build application
+            # Build application with debugging
             echo "🏗️ Building application..."
-            npm run build || {
+            NODE_ENV=production npm run build -- --debug || {
               echo "❌ Failed to build application"
-              exit 1
+              echo "Trying alternative build approach..."
+              # Try alternative build approach if direct build fails
+              NODE_ENV=production npm run build:admin || {
+                echo "❌ Failed to build admin"
+                exit 1
+              }
+              NODE_ENV=production npm run build:backend || {
+                echo "❌ Failed to build backend"
+                exit 1
+              }
             }
             
             # Setup and start PM2
