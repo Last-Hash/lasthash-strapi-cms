@@ -11,46 +11,63 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Debug SSH Information
+        run: |
+          echo "🔍 Debugging SSH Connection"
+          echo "Host: ${{ secrets.EC2_HOST }}"
+          echo "Username: ${{ secrets.EC2_USERNAME }}"
+          echo "SSH Key Length: ${#{{ secrets.EC2_SSH_KEY }}}
+      
+      - name: Create SSH Debug Directory
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "🔐 SSH key file created"
+          
+      - name: Test SSH Connection
+        run: |
+          echo "📡 Testing SSH Connection..."
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} 'echo "SSH Connection Successful"' || echo "SSH Connection Failed"
+      
+      - name: Test SSH Connection with Verbose Output
+        run: |
+          echo "📡 Testing SSH Connection with verbose logging..."
+          ssh -v -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} 'echo "SSH Connection Successful"' || echo "SSH Connection Failed"
+          
+      - name: Check SSH Key Permissions
+        run: |
+          echo "🔐 Checking SSH key permissions..."
+          ls -la ~/.ssh/deploy_key
+          
+      - name: Verify SSH Key Format
+        run: |
+          echo "📝 Verifying SSH key format..."
+          ssh-keygen -l -f ~/.ssh/deploy_key || echo "Invalid key format"
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           
-      - name: Install dependencies
-        run: yarn install
-        
-      - name: Create .env file
-        run: |
-          echo "HOST=0.0.0.0" >> .env
-          echo "PORT=1337" >> .env
-          echo "APP_KEYS=${{ secrets.APP_KEYS }}" >> .env
-          echo "API_TOKEN_SALT=${{ secrets.API_TOKEN_SALT }}" >> .env
-          echo "ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}" >> .env
-          echo "TRANSFER_TOKEN_SALT=${{ secrets.TRANSFER_TOKEN_SALT }}" >> .env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-          echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}" >> .env
-          echo "DATABASE_PORT=${{ secrets.DATABASE_PORT }}" >> .env
-          echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}" >> .env
-          echo "DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}" >> .env
-          echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
-          
-      - name: Build application
-        run: yarn build
-        
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          debug: true
           script: |
-            cd /var/www/strapi-cms
-            git pull origin main
-            yarn install
-            
-            # Copy ENV file
-            echo "${{ secrets.ENV_PRODUCTION }}" > .env
-            
-            # Build and restart
-            yarn build
+            echo "🚀 Starting deployment..."
+            cd /var/www/strapi-cms || exit 1
+            echo "📂 Current directory: $(pwd)"
+            echo "📦 Running git pull..."
+            git pull origin main || exit 1
+            echo "📥 Installing dependencies..."
+            yarn install || exit 1
+            echo "🏗️ Building application..."
+            yarn build || exit 1
+            echo "🔄 Restarting PM2..."
             pm2 restart strapi || pm2 start yarn --name "strapi" -- start
+            echo "✅ Deployment complete!"
