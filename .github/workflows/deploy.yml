@@ -150,17 +150,15 @@ jobs:
             
             # Setup environment file
             echo "📝 Setting up environment file..."
-            cat > .env << 'EOL'
-HOST=0.0.0.0
-PORT=1337
-APP_KEYS=${{ secrets.APP_KEYS }}
-API_TOKEN_SALT=${{ secrets.API_TOKEN_SALT }}
-ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}
-TRANSFER_TOKEN_SALT=${{ secrets.TRANSFER_TOKEN_SALT }}
-JWT_SECRET=${{ secrets.JWT_SECRET }}
-DATABASE_CLIENT=sqlite
-DATABASE_FILENAME=.tmp/data.db
-EOL
+            echo "HOST=0.0.0.0" > .env
+            echo "PORT=1337" >> .env
+            echo "APP_KEYS=$APP_KEYS" >> .env
+            echo "API_TOKEN_SALT=$API_TOKEN_SALT" >> .env
+            echo "ADMIN_JWT_SECRET=$ADMIN_JWT_SECRET" >> .env
+            echo "TRANSFER_TOKEN_SALT=$TRANSFER_TOKEN_SALT" >> .env
+            echo "JWT_SECRET=$JWT_SECRET" >> .env
+            echo "DATABASE_CLIENT=sqlite" >> .env
+            echo "DATABASE_FILENAME=.tmp/data.db" >> .env
             
             # Build application
             echo "🏗️ Building application..."
