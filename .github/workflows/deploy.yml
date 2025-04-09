@@ -227,26 +227,24 @@ jobs:
             
             # Create Nginx configuration file for Strapi
             echo "📝 Creating Nginx configuration..."
-            sudo bash -c 'cat > /etc/nginx/sites-available/strapi << "EOF"
-server {
-    listen 80;
-    server_name crm.lasthash.com;
-
-    location / {
-        proxy_pass http://localhost:1337;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-        proxy_read_timeout 90;
-        client_max_body_size 100M;
-    }
-}
-EOF'
+            echo "server {" | sudo tee /etc/nginx/sites-available/strapi > /dev/null
+            echo "    listen 80;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "    server_name crm.lasthash.com;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "    location / {" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "        proxy_pass http://localhost:1337;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "        proxy_http_version 1.1;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "        proxy_set_header Upgrade \$http_upgrade;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "        proxy_set_header Connection \"upgrade\";" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "        proxy_set_header Host \$host;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "        proxy_set_header X-Real-IP \$remote_addr;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "        proxy_set_header X-Forwarded-Proto \$scheme;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "        proxy_cache_bypass \$http_upgrade;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "        proxy_read_timeout 90;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "        client_max_body_size 100M;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "    }" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
+            echo "}" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
             
             # Remove default site if exists and enable Strapi site
             sudo rm -f /etc/nginx/sites-enabled/default
