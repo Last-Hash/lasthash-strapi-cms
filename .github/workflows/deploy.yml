@@ -218,4 +218,65 @@ jobs:
               exit 1
             }
             
+            # Install and configure Nginx
+            echo "🌐 Setting up Nginx..."
+            sudo apt-get install -y nginx || {
+              echo "❌ Failed to install Nginx"
+              exit 1
+            }
+            
+            # Create Nginx configuration file for Strapi
+            echo "📝 Creating Nginx configuration..."
+            sudo bash -c 'cat > /etc/nginx/sites-available/strapi << "EOF"
+server {
+    listen 80;
+    server_name crm.lasthash.com;
+
+    location / {
+        proxy_pass http://localhost:1337;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 90;
+        client_max_body_size 100M;
+    }
+}
+EOF'
+            
+            # Remove default site if exists and enable Strapi site
+            sudo rm -f /etc/nginx/sites-enabled/default
+            sudo ln -sf /etc/nginx/sites-available/strapi /etc/nginx/sites-enabled/ || {
+              echo "❌ Failed to enable Nginx site"
+              exit 1
+            }
+            
+            # Test and restart Nginx
+            sudo nginx -t && sudo systemctl restart nginx || {
+              echo "❌ Failed to configure Nginx"
+              exit 1
+            }
+            
+            # Install Certbot for SSL
+            echo "🔒 Setting up SSL with Let's Encrypt..."
+            sudo apt-get install -y certbot python3-certbot-nginx || {
+              echo "❌ Failed to install Certbot"
+              exit 1
+            }
+            
+            # Request SSL certificate with automatic Nginx configuration
+            echo "🔒 Requesting SSL certificate..."
+            sudo certbot --nginx -d crm.lasthash.com --non-interactive --agree-tos --email shiv@srapsware.com || {
+              echo "⚠️ SSL certificate setup failed, but continuing deployment"
+            }
+            
+            # Ensure Certbot renewal cron job is setup
+            echo "🔄 Setting up certificate auto-renewal..."
+            sudo systemctl enable certbot.timer
+            sudo systemctl start certbot.timer
+            
             echo "✅ Deployment complete!"
