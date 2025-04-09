@@ -155,16 +155,26 @@ jobs:
             # Setup swap space to prevent OOM errors
             echo "💾 Setting up swap space..."
             if [ ! -f /swapfile ]; then
-              sudo fallocate -l 2G /swapfile
-              sudo chmod 600 /swapfile
-              sudo mkswap /swapfile
-              sudo swapon /swapfile
-              echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
-              echo "✅ Swap space created"
+              # Try to create swap, but continue if it fails
+              sudo fallocate -l 2G /swapfile || {
+                echo "⚠️ Unable to create swap file with fallocate, trying dd method..."
+                sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 || {
+                  echo "⚠️ Failed to create swap file - continuing without swap"
+                }
+              }
+              
+              if [ -f /swapfile ]; then
+                sudo chmod 600 /swapfile
+                sudo mkswap /swapfile
+                sudo swapon /swapfile
+                echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
+                echo "✅ Swap space created"
+              fi
             else
               echo "✅ Swap space already exists"
+              sudo swapon /swapfile 2>/dev/null || echo "⚠️ Could not enable existing swap file"
             fi
-            sudo swapon --show
+            sudo swapon --show || echo "No swap space available"
             
             # Install dependencies with smaller chunks
             echo "📦 Installing dependencies in chunks..."
