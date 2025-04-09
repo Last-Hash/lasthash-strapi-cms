@@ -155,26 +155,16 @@ jobs:
             # Setup swap space to prevent OOM errors
             echo "💾 Setting up swap space..."
             if [ ! -f /swapfile ]; then
-              # Try to create swap, but continue if it fails
-              sudo fallocate -l 2G /swapfile || {
-                echo "⚠️ Unable to create swap file with fallocate, trying dd method..."
-                sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 || {
-                  echo "⚠️ Failed to create swap file - continuing without swap"
-                }
-              }
-              
-              if [ -f /swapfile ]; then
-                sudo chmod 600 /swapfile
-                sudo mkswap /swapfile
-                sudo swapon /swapfile
-                echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
-                echo "✅ Swap space created"
-              fi
+              sudo fallocate -l 2G /swapfile
+              sudo chmod 600 /swapfile
+              sudo mkswap /swapfile
+              sudo swapon /swapfile
+              echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
+              echo "✅ Swap space created"
             else
               echo "✅ Swap space already exists"
-              sudo swapon /swapfile 2>/dev/null || echo "⚠️ Could not enable existing swap file"
             fi
-            sudo swapon --show || echo "No swap space available"
+            sudo swapon --show
             
             # Install dependencies with smaller chunks
             echo "📦 Installing dependencies in chunks..."
@@ -227,64 +217,5 @@ jobs:
               echo "❌ Failed to setup PM2 startup"
               exit 1
             }
-            
-            # Install and configure Nginx
-            echo "🌐 Setting up Nginx..."
-            sudo apt-get install -y nginx || {
-              echo "❌ Failed to install Nginx"
-              exit 1
-            }
-            
-            # Create Nginx configuration file for Strapi
-            echo "📝 Creating Nginx configuration..."
-            echo "server {" | sudo tee /etc/nginx/sites-available/strapi > /dev/null
-            echo "    listen 80;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "    server_name crm.lasthash.com;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "    location / {" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "        proxy_pass http://localhost:1337;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "        proxy_http_version 1.1;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "        proxy_set_header Upgrade \$http_upgrade;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "        proxy_set_header Connection \"upgrade\";" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "        proxy_set_header Host \$host;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "        proxy_set_header X-Real-IP \$remote_addr;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "        proxy_set_header X-Forwarded-Proto \$scheme;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "        proxy_cache_bypass \$http_upgrade;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "        proxy_read_timeout 90;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "        client_max_body_size 100M;" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "    }" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            echo "}" | sudo tee -a /etc/nginx/sites-available/strapi > /dev/null
-            
-            # Remove default site if exists and enable Strapi site
-            sudo rm -f /etc/nginx/sites-enabled/default
-            sudo ln -sf /etc/nginx/sites-available/strapi /etc/nginx/sites-enabled/ || {
-              echo "❌ Failed to enable Nginx site"
-              exit 1
-            }
-            
-            # Test and restart Nginx
-            sudo nginx -t && sudo systemctl restart nginx || {
-              echo "❌ Failed to configure Nginx"
-              exit 1
-            }
-            
-            # Install Certbot for SSL
-            echo "🔒 Setting up SSL with Let's Encrypt..."
-            sudo apt-get install -y certbot python3-certbot-nginx || {
-              echo "❌ Failed to install Certbot"
-              exit 1
-            }
-            
-            # Request SSL certificate with automatic Nginx configuration
-            echo "🔒 Requesting SSL certificate..."
-            sudo certbot --nginx -d crm.lasthash.com --non-interactive --agree-tos --email shiv@srapsware.com || {
-              echo "⚠️ SSL certificate setup failed, but continuing deployment"
-            }
-            
-            # Ensure Certbot renewal cron job is setup
-            echo "🔄 Setting up certificate auto-renewal..."
-            sudo systemctl enable certbot.timer
-            sudo systemctl start certbot.timer
             
             echo "✅ Deployment complete!"
