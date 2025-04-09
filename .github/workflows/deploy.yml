@@ -7,6 +7,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - uses: actions/checkout@v4
@@ -79,6 +81,9 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           debug: true
+          script_stop: true
+          # Add timeout for long-running deployments
+          command_timeout: "30m"
           script: |
             set -e
             echo "🚀 Starting deployment..."
@@ -145,10 +150,7 @@ jobs:
             
             # Setup environment file
             echo "📝 Setting up environment file..."
-            cat > .env << EOL || {
-              echo "❌ Failed to create .env file"
-              exit 1
-            }
+            cat > .env << 'EOL'
 HOST=0.0.0.0
 PORT=1337
 APP_KEYS=${{ secrets.APP_KEYS }}
