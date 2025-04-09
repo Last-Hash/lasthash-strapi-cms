@@ -83,33 +83,107 @@ jobs:
             set -e
             echo "🚀 Starting deployment..."
             
-            # Verify directory exists
-            if [ ! -d "/var/www/strapi-cms" ]; then
-              echo "❌ Directory /var/www/strapi-cms does not exist"
+            # Update package lists and install dependencies
+            echo "📦 Updating system packages..."
+            sudo apt-get update && sudo apt-get install -y curl git || {
+              echo "❌ Failed to install system packages"
               exit 1
+            }
+            
+            # Install Node.js and npm
+            echo "📦 Installing Node.js and npm..."
+            curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && \
+            sudo apt-get install -y nodejs || {
+              echo "❌ Failed to install Node.js"
+              exit 1
+            }
+            
+            # Install PM2 globally
+            echo "📦 Installing PM2..."
+            sudo npm install -g pm2 || {
+              echo "❌ Failed to install PM2"
+              exit 1
+            }
+            
+            # Create deployment directory
+            echo "📂 Creating deployment directory..."
+            sudo mkdir -p /var/www/strapi-cms
+            sudo chown -R $USER:$USER /var/www/strapi-cms || {
+              echo "❌ Failed to set directory permissions"
+              exit 1
+            }
+            
+            # Clone or update repository
+            if [ ! -d "/var/www/strapi-cms/.git" ]; then
+              echo "📥 Cloning repository..."
+              git clone https://github.com/Last-Hash/lasthash-strapi-cms.git /var/www/strapi-cms || {
+                echo "❌ Failed to clone repository"
+                exit 1
+              }
             fi
             
-            cd /var/www/strapi-cms
+            cd /var/www/strapi-cms || {
+              echo "❌ Failed to change directory"
+              exit 1
+            }
             echo "📂 Current directory: $(pwd)"
             
             # Pull latest changes
             echo "📦 Running git pull..."
-            git pull origin main
+            git pull origin main || {
+              echo "❌ Failed to pull latest changes"
+              exit 1
+            }
             
-            # Install dependencies
+            # Clean install dependencies
             echo "📥 Installing dependencies..."
-            npm ci
+            rm -rf node_modules
+            npm ci || {
+              echo "❌ Failed to install dependencies"
+              exit 1
+            }
+            
+            # Setup environment file
+            echo "📝 Setting up environment file..."
+            cat > .env << EOL || {
+              echo "❌ Failed to create .env file"
+              exit 1
+            }
+HOST=0.0.0.0
+PORT=1337
+APP_KEYS=${{ secrets.APP_KEYS }}
+API_TOKEN_SALT=${{ secrets.API_TOKEN_SALT }}
+ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}
+TRANSFER_TOKEN_SALT=${{ secrets.TRANSFER_TOKEN_SALT }}
+JWT_SECRET=${{ secrets.JWT_SECRET }}
+DATABASE_CLIENT=sqlite
+DATABASE_FILENAME=.tmp/data.db
+EOL
             
             # Build application
             echo "🏗️ Building application..."
-            npm run build
+            npm run build || {
+              echo "❌ Failed to build application"
+              exit 1
+            }
             
-            # Restart PM2
-            echo "🔄 Restarting PM2..."
-            if pm2 list | grep -q "strapi"; then
-              pm2 restart strapi
-            else
-              pm2 start npm --name "strapi" -- start
-            fi
+            # Setup and start PM2
+            echo "🔄 Configuring PM2..."
+            pm2 delete strapi 2>/dev/null || true
+            pm2 start npm --name "strapi" -- start || {
+              echo "❌ Failed to start PM2 process"
+              exit 1
+            }
+            pm2 save || {
+              echo "❌ Failed to save PM2 configuration"
+              exit 1
+            }
+            
+            # Setup PM2 startup
+            echo "⚙️ Setting up PM2 startup..."
+            sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u $USER --hp /home/$USER || {
+              echo "❌ Failed to setup PM2 startup"
+              exit 1
+            }
             
             echo "✅ Deployment complete!"
