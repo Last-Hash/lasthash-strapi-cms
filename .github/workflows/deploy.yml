@@ -7,6 +7,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    
     steps:
       - uses: actions/checkout@v4
       
@@ -18,6 +19,21 @@ jobs:
       - name: Install dependencies
         run: yarn install
         
+      - name: Create .env file
+        run: |
+          echo "HOST=0.0.0.0" >> .env
+          echo "PORT=1337" >> .env
+          echo "APP_KEYS=${{ secrets.APP_KEYS }}" >> .env
+          echo "API_TOKEN_SALT=${{ secrets.API_TOKEN_SALT }}" >> .env
+          echo "ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}" >> .env
+          echo "TRANSFER_TOKEN_SALT=${{ secrets.TRANSFER_TOKEN_SALT }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}" >> .env
+          echo "DATABASE_PORT=${{ secrets.DATABASE_PORT }}" >> .env
+          echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}" >> .env
+          echo "DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}" >> .env
+          echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
+          
       - name: Build application
         run: yarn build
         
@@ -31,5 +47,10 @@ jobs:
             cd /var/www/strapi-cms
             git pull origin main
             yarn install
+            
+            # Copy ENV file
+            echo "${{ secrets.ENV_PRODUCTION }}" > .env
+            
+            # Build and restart
             yarn build
-            pm2 restart strapi
+            pm2 restart strapi || pm2 start yarn --name "strapi" -- start
