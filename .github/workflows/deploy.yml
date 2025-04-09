@@ -156,7 +156,7 @@ jobs:
             
             # Setup environment file with correct values
             echo "📝 Setting up environment file..."
-            cat > .env << EOF
+            cat > .env << 'EOF'
 HOST=0.0.0.0
 PORT=1337
 APP_KEYS=toBeModified1,toBeModified2,toBeModified3,toBeModified4
