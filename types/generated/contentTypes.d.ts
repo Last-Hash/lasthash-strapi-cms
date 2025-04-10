@@ -592,7 +592,8 @@ export interface ApiPortfolioPortfolio extends Struct.CollectionTypeSchema {
 export interface ApiTechnologyTechnology extends Struct.CollectionTypeSchema {
   collectionName: 'technologies';
   info: {
-    displayName: 'technology';
+    description: '';
+    displayName: 'Technology';
     pluralName: 'technologies';
     singularName: 'technology';
   };
