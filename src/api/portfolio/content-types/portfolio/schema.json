@@ -1,0 +1,84 @@
+{
+  "kind": "collectionType",
+  "collectionName": "portfolios",
+  "info": {
+    "singularName": "portfolio",
+    "pluralName": "portfolios",
+    "displayName": "Portfolio",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "Title": {
+      "type": "string"
+    },
+    "Slug": {
+      "type": "uid",
+      "targetField": "Title"
+    },
+    "ClientName": {
+      "type": "string"
+    },
+    "Featured": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
+    "ProjectStatus": {
+      "type": "enumeration",
+      "enum": [
+        "Completed",
+        "In Progress",
+        "Maintenance"
+      ]
+    },
+    "CompletionDate": {
+      "type": "date"
+    },
+    "Duration": {
+      "type": "integer"
+    },
+    "ThumbnailImage": {
+      "allowedTypes": [
+        "images"
+      ],
+      "type": "media",
+      "multiple": false,
+      "required": true
+    },
+    "BannerImage": {
+      "allowedTypes": [
+        "images"
+      ],
+      "type": "media",
+      "multiple": false
+    },
+    "Gallery": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": true
+    },
+    "VideoURL": {
+      "type": "string"
+    },
+    "LiveURL": {
+      "type": "string"
+    },
+    "ShortDescription": {
+      "type": "text"
+    },
+    "DetailedDescription": {
+      "type": "blocks"
+    },
+    "CaseStudyURL": {
+      "type": "string"
+    }
+  }
+}
