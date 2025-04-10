@@ -1,0 +1,76 @@
+{
+  "kind": "collectionType",
+  "collectionName": "technologies",
+  "info": {
+    "singularName": "technology",
+    "pluralName": "technologies",
+    "displayName": "technology"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "Name": {
+      "type": "string"
+    },
+    "Slug": {
+      "type": "uid",
+      "targetField": "Name"
+    },
+    "Category": {
+      "type": "enumeration",
+      "enum": [
+        "Frontend",
+        "Backend",
+        "Database",
+        "DevOps",
+        "Mobile"
+      ]
+    },
+    "Description": {
+      "type": "richtext"
+    },
+    "ShortDescription": {
+      "type": "text"
+    },
+    "Icon": {
+      "allowedTypes": [
+        "images"
+      ],
+      "type": "media",
+      "multiple": false
+    },
+    "Logo": {
+      "allowedTypes": [
+        "images"
+      ],
+      "type": "media",
+      "multiple": false
+    },
+    "OfficialWebsite": {
+      "type": "string"
+    },
+    "ExpertiseLevel": {
+      "type": "enumeration",
+      "enum": [
+        "Beginner",
+        "Intermediate",
+        "Expert"
+      ]
+    },
+    "YearsExperience": {
+      "type": "string"
+    },
+    "Featured": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
+    "portfolios": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::portfolio.portfolio",
+      "mappedBy": "technologies"
+    }
+  }
+}

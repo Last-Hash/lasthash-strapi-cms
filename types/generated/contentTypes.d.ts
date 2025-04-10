@@ -575,6 +575,10 @@ export interface ApiPortfolioPortfolio extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     ShortDescription: Schema.Attribute.Text;
     Slug: Schema.Attribute.UID<'Title'>;
+    technologies: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::technology.technology'
+    >;
     ThumbnailImage: Schema.Attribute.Media<'images'> &
       Schema.Attribute.Required;
     Title: Schema.Attribute.String;
@@ -582,6 +586,54 @@ export interface ApiPortfolioPortfolio extends Struct.CollectionTypeSchema {
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     VideoURL: Schema.Attribute.String;
+  };
+}
+
+export interface ApiTechnologyTechnology extends Struct.CollectionTypeSchema {
+  collectionName: 'technologies';
+  info: {
+    displayName: 'technology';
+    pluralName: 'technologies';
+    singularName: 'technology';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    Category: Schema.Attribute.Enumeration<
+      ['Frontend', 'Backend', 'Database', 'DevOps', 'Mobile']
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    Description: Schema.Attribute.RichText;
+    ExpertiseLevel: Schema.Attribute.Enumeration<
+      ['Beginner', 'Intermediate', 'Expert']
+    >;
+    Featured: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    Icon: Schema.Attribute.Media<'images'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::technology.technology'
+    > &
+      Schema.Attribute.Private;
+    Logo: Schema.Attribute.Media<'images'>;
+    Name: Schema.Attribute.String;
+    OfficialWebsite: Schema.Attribute.String;
+    portfolios: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::portfolio.portfolio'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    ShortDescription: Schema.Attribute.Text;
+    Slug: Schema.Attribute.UID<'Name'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    YearsExperience: Schema.Attribute.String;
   };
 }
 
@@ -1100,6 +1152,7 @@ declare module '@strapi/strapi' {
       'api::category.category': ApiCategoryCategory;
       'api::global.global': ApiGlobalGlobal;
       'api::portfolio.portfolio': ApiPortfolioPortfolio;
+      'api::technology.technology': ApiTechnologyTechnology;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

@@ -41,29 +41,31 @@
       "type": "integer"
     },
     "ThumbnailImage": {
-      "allowedTypes": [
-        "images"
-      ],
       "type": "media",
       "multiple": false,
-      "required": true
-    },
-    "BannerImage": {
+      "required": true,
       "allowedTypes": [
         "images"
-      ],
+      ]
+    },
+    "BannerImage": {
       "type": "media",
-      "multiple": false
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
     },
     "Gallery": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
       "allowedTypes": [
         "images",
         "files",
         "videos",
         "audios"
-      ],
-      "type": "media",
-      "multiple": true
+      ]
     },
     "VideoURL": {
       "type": "string"
@@ -79,6 +81,12 @@
     },
     "CaseStudyURL": {
       "type": "string"
+    },
+    "technologies": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::technology.technology",
+      "inversedBy": "portfolios"
     }
   }
 }
