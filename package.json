@@ -1,5 +1,5 @@
 {
-  "name": "srapsware-strapi-admin",
+  "name": "my-strapi-project",
   "version": "0.1.0",
   "private": true,
   "description": "A Strapi application",
@@ -12,13 +12,13 @@
     "seed:example": "node ./scripts/seed.js",
     "start": "strapi start",
     "strapi": "strapi",
-    "setup": "bash scripts/setup.sh",
-    "deploy-prod": "bash scripts/deploy.sh"
+    "upgrade": "npx @strapi/upgrade latest",
+    "upgrade:dry": "npx @strapi/upgrade latest --dry"
   },
   "dependencies": {
-    "@strapi/plugin-cloud": "5.12.3",
-    "@strapi/plugin-users-permissions": "5.12.3",
-    "@strapi/strapi": "5.12.3",
+    "@strapi/plugin-cloud": "5.12.4",
+    "@strapi/plugin-users-permissions": "5.12.4",
+    "@strapi/strapi": "5.12.4",
     "better-sqlite3": "11.3.0",
     "fs-extra": "^10.0.0",
     "mime-types": "^2.1.27",
@@ -33,6 +33,6 @@
     "npm": ">=6.0.0"
   },
   "strapi": {
-    "uuid": "d96391aa-2d48-4340-a928-66ad9d677e22"
+    "uuid": "f94d8b1e-86ae-40ac-82b7-ff51d28d4337"
   }
 }
