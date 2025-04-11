@@ -93,6 +93,16 @@
       "relation": "manyToMany",
       "target": "api::portfolio-category.portfolio-category",
       "inversedBy": "portfolios"
+    },
+    "project_type": {
+      "type": "enumeration",
+      "enum": [
+        "Client Project",
+        "Internal Project",
+        "Open Source"
+      ],
+      "required": true,
+      "default": "Client Project"
     }
   }
 }

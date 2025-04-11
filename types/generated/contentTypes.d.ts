@@ -613,6 +613,11 @@ export interface ApiPortfolioPortfolio extends Struct.CollectionTypeSchema {
       'manyToMany',
       'api::portfolio-category.portfolio-category'
     >;
+    project_type: Schema.Attribute.Enumeration<
+      ['Client Project', 'Internal Project', 'Open Source']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Client Project'>;
     ProjectStatus: Schema.Attribute.Enumeration<
       ['Completed', 'In Progress', 'Maintenance']
     >;
