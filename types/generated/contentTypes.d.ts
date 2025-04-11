@@ -628,6 +628,10 @@ export interface ApiPortfolioPortfolio extends Struct.CollectionTypeSchema {
       'manyToMany',
       'api::technology.technology'
     >;
+    testimonial: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::testimonial.testimonial'
+    >;
     ThumbnailImage: Schema.Attribute.Media<'images'> &
       Schema.Attribute.Required;
     Title: Schema.Attribute.String;
@@ -684,6 +688,43 @@ export interface ApiTechnologyTechnology extends Struct.CollectionTypeSchema {
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     YearsExperience: Schema.Attribute.String;
+  };
+}
+
+export interface ApiTestimonialTestimonial extends Struct.CollectionTypeSchema {
+  collectionName: 'testimonials';
+  info: {
+    displayName: 'Testimonial';
+    pluralName: 'testimonials';
+    singularName: 'testimonial';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    client_name: Schema.Attribute.String & Schema.Attribute.Required;
+    company: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    date: Schema.Attribute.Date;
+    featured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    job_title: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::testimonial.testimonial'
+    > &
+      Schema.Attribute.Private;
+    location: Schema.Attribute.String;
+    portfolios: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::portfolio.portfolio'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -1204,6 +1245,7 @@ declare module '@strapi/strapi' {
       'api::portfolio-category.portfolio-category': ApiPortfolioCategoryPortfolioCategory;
       'api::portfolio.portfolio': ApiPortfolioPortfolio;
       'api::technology.technology': ApiTechnologyTechnology;
+      'api::testimonial.testimonial': ApiTestimonialTestimonial;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

@@ -103,6 +103,12 @@
       ],
       "required": true,
       "default": "Client Project"
+    },
+    "testimonial": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::testimonial.testimonial",
+      "inversedBy": "portfolios"
     }
   }
 }
