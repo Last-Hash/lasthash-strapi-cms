@@ -655,7 +655,7 @@ export interface ApiTechnologyTechnology extends Struct.CollectionTypeSchema {
   };
   attributes: {
     Category: Schema.Attribute.Enumeration<
-      ['Frontend', 'Backend', 'Database', 'DevOps', 'Mobile']
+      ['Frontend', 'Backend', 'Database', 'Cloud & DevOps', 'Mobile']
     >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
