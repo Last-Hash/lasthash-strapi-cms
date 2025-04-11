@@ -87,6 +87,12 @@
       "relation": "manyToMany",
       "target": "api::technology.technology",
       "inversedBy": "portfolios"
+    },
+    "portfolio_categories": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::portfolio-category.portfolio-category",
+      "inversedBy": "portfolios"
     }
   }
 }

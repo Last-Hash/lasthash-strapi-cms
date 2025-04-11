@@ -534,6 +534,46 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
   };
 }
 
+export interface ApiPortfolioCategoryPortfolioCategory
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'portfolio_categories';
+  info: {
+    description: '';
+    displayName: 'Portfolio Category';
+    pluralName: 'portfolio-categories';
+    singularName: 'portfolio-category';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.RichText;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::portfolio-category.portfolio-category'
+    > &
+      Schema.Attribute.Private;
+    portfolio_category: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::portfolio-category.portfolio-category'
+    >;
+    portfolios: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::portfolio.portfolio'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'title'>;
+    title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiPortfolioPortfolio extends Struct.CollectionTypeSchema {
   collectionName: 'portfolios';
   info: {
@@ -569,6 +609,10 @@ export interface ApiPortfolioPortfolio extends Struct.CollectionTypeSchema {
       'api::portfolio.portfolio'
     > &
       Schema.Attribute.Private;
+    portfolio_categories: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::portfolio-category.portfolio-category'
+    >;
     ProjectStatus: Schema.Attribute.Enumeration<
       ['Completed', 'In Progress', 'Maintenance']
     >;
@@ -1152,6 +1196,7 @@ declare module '@strapi/strapi' {
       'api::author.author': ApiAuthorAuthor;
       'api::category.category': ApiCategoryCategory;
       'api::global.global': ApiGlobalGlobal;
+      'api::portfolio-category.portfolio-category': ApiPortfolioCategoryPortfolioCategory;
       'api::portfolio.portfolio': ApiPortfolioPortfolio;
       'api::technology.technology': ApiTechnologyTechnology;
       'plugin::content-releases.release': PluginContentReleasesRelease;
