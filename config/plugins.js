@@ -26,4 +26,7 @@ module.exports = ({ env }) => ({
       },
     },
   },
+  'import-export-content': {
+    enabled: true,
+  },
 });
